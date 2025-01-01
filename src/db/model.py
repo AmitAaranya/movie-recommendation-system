@@ -1,6 +1,6 @@
 from datetime import datetime
-from sqlalchemy import String
-from sqlalchemy.orm import validates
+from sqlalchemy import String,Integer, ForeignKey, Float, DateTime
+from sqlalchemy.orm import validates, relationship
 import bcrypt
 from .setup import db
 
@@ -9,7 +9,7 @@ class BaseModel():
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
 
-class Movie(db.Model,BaseModel):
+class MovieDb(db.Model,BaseModel):
     __tablename__ = 'movies'
 
     Id = db.Column(db.Integer, primary_key=True,autoincrement=True)
@@ -63,7 +63,7 @@ class Movie(db.Model,BaseModel):
 
 
 
-class User(db.Model,BaseModel):
+class UserDb(db.Model,BaseModel):
     __tablename__ = 'users'
 
     Id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -117,6 +117,32 @@ class User(db.Model,BaseModel):
         if not re.match(r"[^@]+@[^@]+\.[^@]+", value):
             raise ValueError(f"Invalid email format: {value}")
         return value
+    
+
+class RatingDb(db.Model,BaseModel):
+    __tablename__ = 'ratings'
+
+    Id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    UserId = db.Column(db.Integer, ForeignKey('users.Id'), nullable=False)
+    MovieId = db.Column(db.Integer, ForeignKey('movies.Id'), nullable=False)
+    Rating = db.Column(db.Float, nullable=False)
+    Timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    user = relationship('UserDb', backref='ratings')
+    movie = relationship('MovieDb', backref='ratings')
+
+    def __init__(self, UserId, MovieId, Rating):
+        self.UserId = UserId
+        self.MovieId = MovieId
+        self.Rating = Rating
+        self.Timestamp = datetime.utcnow()
+
+    @validates('Rating')
+    def validate_rating(self, key, value):
+        if not (0 <= value <= 5):
+            raise ValueError(f"Rating must be between 0 and 5, but got {value}.")
+        return value 
     
 
 
