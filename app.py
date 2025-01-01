@@ -4,6 +4,7 @@ from src.db.operations.user import UserOps
 from src.db.operations.movie import MovieOps
 
 from src.db.setup import db
+from src.error import MovieNotFoundError, UserNotFoundError
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///movies.db'
@@ -42,7 +43,7 @@ def get_all_movies():
         return jsonify(movie_list)
     except SQLAlchemyError as e:
         db.session.rollback()
-        return jsonify({"message": "Error retrieving movies", "error": str(e)}), 500
+        return jsonify({"message": "Error retrieving all movies", "error": str(e)}), 500
 
 @app.route('/movies/<int:id>', methods=['GET'])
 def get_movie_by_id(id):
@@ -87,8 +88,19 @@ def rate_movies():
         return jsonify(user.to_dict()), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"message": "Error While Creating User", "error": str(e)}), 500
+        return jsonify({"message": "Rate a movie", "error": str(e)}), 500
 
 
+@app.errorhandler(Exception)
+def handle_not_found_error(error):
+    if isinstance(error, MovieNotFoundError):
+        return jsonify({"error": error.message}), 404
+    elif isinstance(error, UserNotFoundError):
+        return jsonify({"error": error.message}), 404
+    else:
+
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    
 if __name__ == "__main__":
-    app.run(debug=True)
+    # app.run(debug=True)
+    app.run()

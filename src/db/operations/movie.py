@@ -22,7 +22,7 @@ class MovieOps():
     def get(self,Id):
         movie = MovieDb.query.get(Id)
         if movie is None:
-            MovieNotFoundError(Id)
+            raise MovieNotFoundError(Id)
         return movie
     
     def get_genres(self,Id):
