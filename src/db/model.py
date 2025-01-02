@@ -7,6 +7,9 @@ from .setup import db
 class BaseModel():
     def to_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+    
+    def to_array(self):
+        return [getattr(self, column.name) for column in self.__table__.columns if column.name not in ["Id","Name","Email","Password"]]
 
 
 class MovieDb(db.Model,BaseModel):
