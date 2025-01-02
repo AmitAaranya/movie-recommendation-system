@@ -36,7 +36,8 @@ class UserOps():
         if not user:
             raise ValueError(f"User with email {email} not found")
         
-        fields = [column.name for column in UserDb.__table__.columns if column.name not in ['Id',"Name","Email",'Password']]
+        fields = [column.name for column in UserDb.__table__.columns \
+                  if column.name not in ['Id',"Name","Email",'Password']]
         for field in fields:
             setattr(user, field, kwrgs.get(field, getattr(user, field)))
         return user

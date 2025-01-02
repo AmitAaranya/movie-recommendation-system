@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Recommender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h2>Movie Recommender</h2>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/register">Register</a></li>
+                <li><a href="/add_movie">Movie+</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main content block that other templates can override -->
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer Section -->
+    <footer>
+        <p>
+            <a href="mailto:amitaaranya@gmail.com" target="_blank">amitaaranya@gmail.com</a> | 
+            <a href="https://www.linkedin.com/in/amitaaranya" target="_blank">linkedin.com/amitaaranya</a> | 
+            <a href="https://github.com/AmitAaranya" target="_blank">github.com/AmitAaranya</a>
+        </p>
+    </footer>
+</body>
+</html>

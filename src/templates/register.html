@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="registration-container">
+    <div class="registration-form">
+        <h2 style="margin-bottom: 10px;">User Registeration</h2>
+
+        <form id="user-form" onsubmit="submitForm(event)">
+            <!-- User Info Fields (in one row) -->
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+            </div>
+
+            <!-- Movie Block Section (separate div) -->
+            <div class="movie-grid">
+                {% for movie in movies %}
+                {% include 'movies.html' %}
+                {% endfor %}
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="submit-btn">Register</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let ratings = {};  // Object to store the ratings for each movie by id
+
+    // Update rating when the slider is changed
+    function updateRating(movieId, value) {
+        document.getElementById('rating-value-' + movieId).innerText = value;
+        ratings[movieId] = value;  // Store the rating for the movie by id
+    }
+
+    // Submit form data to Flask backend
+    function submitForm(event) {
+        event.preventDefault(); // Prevent the default form submission behavior
+
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        // Prepare data to send
+        const userData = {
+            Name: name,
+            Email: email,
+            Password: password,
+            Ratings: ratings  // Include ratings for selected movies
+        };
+
+        fetch('/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Registration successful!');
+                    // Redirect to the movie recommendation page
+                    window.location.href = '/movie_recommend';  // URL for movie recommendations
+                } else {
+                    alert('Registration failed. Please try again.');
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('Error registering user');
+            });
+    }
+</script>
+{% endblock %}
