@@ -1,24 +1,36 @@
+import os
 from flask import Flask, jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
+
 from src.db.operations.user import UserOps
 from src.db.operations.movie import MovieOps
-
 from src.db.setup import db
+
+from src.ai.task import Ai
 from src.error import MovieNotFoundError, UserNotFoundError
+
 app = Flask(__name__)
 
+# SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///movies.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Initialize SQLAlchemy
 db.init_app(app)
-
 with app.app_context():
     db.create_all()
 
+# AI
+AI = Ai(model_data_dir=os.path.join("data","model"),user_feature=14,movie_feature=15)
 @app.route("/")
 def home():
     return "Hello World"
+
+@app.route("/ai/rate",methods=['POST'])
+def movie_embed():
+    data = request.get_json()
+    movie = MovieOps(db.session).get(data['movieId'])
+    user = UserOps(db.session).get(data['Email'])
+
+    return jsonify(AI.predict_rating(user.to_array(),movie.to_array()))
 
 @app.route('/movies', methods=['POST'])
 def add_movie():
@@ -99,7 +111,7 @@ def handle_not_found_error(error):
         return jsonify({"error": error.message}), 404
     else:
 
-        return jsonify({"error": "An unexpected error occurred"}), 500
+        return jsonify({"error": f"{error}"}), 500
     
 if __name__ == "__main__":
     # app.run(debug=True)
