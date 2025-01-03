@@ -79,7 +79,26 @@ def get_movie_by_id(id):
         db.session.rollback()
         return jsonify({"message": "Error retrieving movie", "error": str(e)}), 500
     
+@app.route('/movie/simillar', methods=['GET'])
 def get_movies():
+    movies = MovieOps(db.session).get_all()
+    db.session.commit()
+    if not movies:
+        return jsonify({"message": "No movies found"}), 404
+    movie_list = [{'Id': movie.Id, "Name": movie.Name,"Year": movie.Year} for movie in movies]
+    return render_template('simillar_movie.html', movies=movie_list)
+
+@app.route('/movie/simillar/<int:id>', methods=['GET'])
+def get_simillar_movies(id):
+    movies = MovieOps(db.session).get_all()
+    db.session.commit()
+    AI.get_all_movie_vector(MovieOps(db.session).get_all())
+    score = AI.get_cosine_simillarity_score(int(id))
+    movie_dict = {movie.Id: {"Name": movie.Name,"Year": movie.Year} for movie in movies}
+    res_movie_list = [{'Id': a[0], "Name": movie_dict[a[0]]['Name'],\
+                       "Year": movie_dict[a[0]]['Year'],'score': a[1]} for a in score]
+    return jsonify({'related_movies': res_movie_list})
+    
 @app.route('/register',methods = ["GET"])
 def add_user():
     try:
