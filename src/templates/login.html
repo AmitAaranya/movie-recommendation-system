@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-form">
+        <h2>User Registration</h2>
+
+        <form id="user-form" onsubmit="submitForm(event)">
+            <!-- Email Field (in one row) -->
+            <div class="login-form-field">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <!-- Password Field (in another row) -->
+            <div class="login-form-field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="login-submit-btn">Login</button>
+        </form>
+
+        <!-- Register Button (For Users who don't have an account) -->
+        <div class="login-register-link">
+            <p>Don't have an account? <a href="/register" class="login-register-btn">Register here</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function submitForm(event) {
+        event.preventDefault();
+
+        const userData = {
+            Email: document.getElementById('email').value,
+            Password: document.getElementById('password').value
+        };
+
+        fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const nextPage = urlParams.get('next') || '/'; // Use '/home' as fallback
+
+                    // Redirect to the 'next' page or the fallback
+                    window.location.href = nextPage;
+                        // window.location.href = '/movie_recommend';  // URL for movie recommendations
+                } else {
+                    alert('Registration failed. Please try again.');
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('Error registering user');
+            });
+    }
+</script>
+
+{% endblock %}

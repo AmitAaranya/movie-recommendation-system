@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, redirect, render_template, request, url_for
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.db.operations.user import UserOps
@@ -9,7 +9,8 @@ from src.db.setup import db
 from src.ai.task import Ai
 from src.error import MovieNotFoundError, UserNotFoundError
 
-app = Flask(__name__)
+app = Flask(__name__,template_folder=os.path.join('src','templates')\
+            ,static_folder=os.path.join('src','static'))
 
 # SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///movies.db'
@@ -17,6 +18,17 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 with app.app_context():
     db.create_all()
+
+# Flask-login
+from flask_login import LoginManager, login_required, login_user, logout_user
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+app.secret_key = os.urandom(24)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return UserOps(db.session).get_by_id(user_id)
 
 # AI
 AI = Ai(model_data_dir=os.path.join("data","model"),user_feature=14,movie_feature=15)
@@ -66,17 +78,53 @@ def get_movie_by_id(id):
     except SQLAlchemyError as e:
         db.session.rollback()
         return jsonify({"message": "Error retrieving movie", "error": str(e)}), 500
+    
+@app.route('/register',methods = ["GET"])
+def add_user():
+    try:
+        movies = MovieOps(db.session).get_all()
+        db.session.commit()
+        if not movies:
+            return jsonify({"message": "No movies found"}), 404
+        movie_list = [{'Id': movie.Id, "Name": movie.Name,"Year": movie.Year} for movie in movies]
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({"message": "Error retrieving all movies", "error": str(e)}), 500
+    return render_template('register.html', movies=movie_list)
 
 @app.route('/register', methods=['POST'])
 def register_user():
     data = request.get_json()
-    new_user = UserOps(db.session).add(data.get('Name'),data.get('Email'),data.get('Password'))
+    user_ops = UserOps(db.session)
+    new_user = user_ops.add(data.get('Name'),data.get('Email'),data.get('Password'))
+    for movie_id,rating in data['Ratings'].items():
+        user_ops.rate_movie(data.get('Email'),movie_id,float(rating))
     try:
         db.session.commit()
         return jsonify({"message": "User Created successfully", "Id": new_user.Email}), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": "Error While Creating User", "error": str(e)}), 500
+    
+@app.route('/login', methods=['GET'])
+def login():
+    return render_template('login.html')
+
+@app.route('/login', methods=['POST'])
+def login_post():
+    data = request.get_json()
+    user_ops = UserOps(db.session)
+    user = user_ops.get(data.get('Email'))
+    if user_ops.authenticate(user,data.get('Password')):
+        login_user(user)
+        return jsonify({"success": "Log In"}), 201
+    return jsonify({"error": "something wrong"}), 500
+    
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
     
 @app.route('/user', methods=['GET'])
 def get_user():
