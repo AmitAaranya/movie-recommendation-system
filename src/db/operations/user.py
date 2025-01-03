@@ -30,6 +30,12 @@ class UserOps():
         if not user:
             raise UserNotFoundError(email)
         return user
+    
+    def get_by_id(self,Id):
+        user = self.session.query(UserDb).filter_by(Id=Id).first()
+        if not user:
+            raise UserNotFoundError(Id)
+        return user
         
     def modify(self,email,**kwrgs):
         user = self.session.query(UserDb).filter_by(Email=email).first()
@@ -61,5 +67,5 @@ class UserOps():
         return self.modify(email=email,**updated_rating_dict)
 
 
-    def __authenticate(self,user:UserDb,password):
+    def authenticate(self,user:UserDb,password):
         return bcrypt.checkpw(password.encode('utf-8'), user.Password.encode('utf-8'))

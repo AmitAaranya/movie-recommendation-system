@@ -79,6 +79,7 @@ def get_movie_by_id(id):
         db.session.rollback()
         return jsonify({"message": "Error retrieving movie", "error": str(e)}), 500
     
+def get_movies():
 @app.route('/register',methods = ["GET"])
 def add_user():
     try:

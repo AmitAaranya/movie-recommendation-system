@@ -1,4 +1,5 @@
 from datetime import datetime
+from flask_login import UserMixin
 from sqlalchemy import String,Integer, ForeignKey, Float, DateTime
 from sqlalchemy.orm import validates, relationship
 import bcrypt
@@ -66,7 +67,7 @@ class MovieDb(db.Model,BaseModel):
 
 
 
-class UserDb(db.Model,BaseModel):
+class UserDb(db.Model,BaseModel,UserMixin):
     __tablename__ = 'users'
 
     Id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -120,6 +121,10 @@ class UserDb(db.Model,BaseModel):
         if not re.match(r"[^@]+@[^@]+\.[^@]+", value):
             raise ValueError(f"Invalid email format: {value}")
         return value
+    
+    def get_id(self):
+        return str(self.Id)
+
     
 
 class RatingDb(db.Model,BaseModel):

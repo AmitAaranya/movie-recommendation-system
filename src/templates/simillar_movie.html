@@ -1,137 +1,159 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <style>
-        /* Custom styles for the similar movie page */
-        .movie-scroll-container {
-            display: flex;
-            overflow-x: scroll;
-            gap: 15px;
-            padding: 10px 0;
-        }
+<style>
+    /* Custom styles for the similar movie page */
+    .movie-scroll-container {
+        display: flex;
+        overflow-x: scroll;
+        gap: 15px;
+        padding: 10px 0;
+    }
 
-        .movie-block {
-            min-width: 200px;
-            background-color: #f9f9f9;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
+    .movie-block {
+        min-width: 200px;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
 
-        .movie-block:hover {
-            transform: translateY(-5px);
-        }
+    .movie-block:hover {
+        transform: translateY(-5px);
+    }
 
-        .movie-info h3 {
-            font-size: 1.1em;
-        }
 
-        .search-box {
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            margin-bottom: 20px;
-            font-size: 1.2em;
-        }
+    .movie-block.selected {
+        border: 2px solid #007bff;
+        /* Add blue border to indicate selection */
+        box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+        /* Add glow effect */
+    }
 
-        .related-movies {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-top: 30px;
-            position: relative; /* To position the loader correctly */
-        }
+    .movie-info h3 {
+        font-size: 1.1em;
+    }
 
-        .related-movie-box {
-            width: 200px;
-            background-color: #f9f9f9;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-    </style>
-    <!-- Main content block that other templates can override -->
-    <div class="content">
-        <div class="search-section">
-            <input type="text" id="search-box" class="search-box" placeholder="Search for a movie..." oninput="searchMovies()">
-        </div>
+    .search-box {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+        font-size: 1.2em;
+    }
 
-        <div class="movie-scroll-container" id="movie-list">
-            {% for movie in movies %}
-                <div class="movie-block" data-movie-id="{{ movie['Id'] }}" onclick="fetchRelatedMovies({{ movie['Id'] }})">
-                    <div class="movie-info">
-                        <h3>{{ movie['Name'] }}</h3>
-                        <p>{{ movie['Year'] }}</p>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
+    .related-movies {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-top: 30px;
+        position: relative;
+        /* To position the loader correctly */
+    }
 
-        <div class="related-movies" id="related-movies">
-            <!-- Lazy loader will appear here while fetching related movies -->
-            <div id="loader" class="loader"></div>
-        </div>
+    .related-movie-box {
+        width: 200px;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+</style>
+<!-- Main content block that other templates can override -->
+<div class="content">
+    <div class="search-section">
+        <input type="text" id="search-box" class="search-box" placeholder="Search for a movie..."
+            oninput="searchMovies()">
     </div>
-    <script>
-        function searchMovies() {
-            let query = document.getElementById('search-box').value.toLowerCase();
-            let movieList = document.getElementById('movie-list');
-            let movieBlocks = movieList.getElementsByClassName('movie-block');
 
-            for (let i = 0; i < movieBlocks.length; i++) {
-                let movieName = movieBlocks[i].querySelector('.movie-info h3').textContent.toLowerCase();
-                if (movieName.includes(query)) {
-                    movieBlocks[i].style.display = '';
-                } else {
-                    movieBlocks[i].style.display = 'none';
+    <div class="movie-scroll-container" id="movie-list">
+        {% for movie in movies %}
+        <div class="movie-block" data-movie-id="{{ movie['Id'] }}" onclick="fetchRelatedMovies({{ movie['Id'] }})">
+            <div class="movie-info">
+                <h3>{{ movie['Name'] }}</h3>
+                <p>{{ movie['Year'] }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="related-movies" id="related-movies">
+        <!-- Lazy loader will appear here while fetching related movies -->
+        <div id="loader" class="loader"></div>
+    </div>
+</div>
+<script>
+    function searchMovies() {
+        let query = document.getElementById('search-box').value.toLowerCase();
+        let movieList = document.getElementById('movie-list');
+        let movieBlocks = movieList.getElementsByClassName('movie-block');
+
+        for (let i = 0; i < movieBlocks.length; i++) {
+            let movieName = movieBlocks[i].querySelector('.movie-info h3').textContent.toLowerCase();
+            if (movieName.includes(query)) {
+                movieBlocks[i].style.display = '';
+            } else {
+                movieBlocks[i].style.display = 'none';
+            }
+        }
+    }
+
+    function fetchRelatedMovies(movieId) {
+        // Show the loader
+        const loader = document.getElementById('loader');
+        if (loader) {
+            loader.style.display = 'block'; // Show loader
+        }
+
+        // Get all movie blocks and remove selected class
+        const movieBlocks = document.querySelectorAll('.movie-block');
+        movieBlocks.forEach(block => {
+            block.classList.remove('selected');
+        });
+
+        // Highlight the clicked movie block
+        const selectedMovieBlock = document.querySelector(`[data-movie-id='${movieId}']`);
+        if (selectedMovieBlock) {
+            selectedMovieBlock.classList.add('selected');
+        }
+
+        // Make an AJAX request to get related movies from the backend
+        fetch(`/movie/simillar/${movieId}`)
+            .then(response => response.json())
+            .then(data => {
+                let relatedMoviesContainer = document.getElementById('related-movies');
+                relatedMoviesContainer.innerHTML = '';  // Clear previous related movies
+
+                // Hide the loader after the data is fetched
+                if (loader) {
+                    loader.style.display = 'none';
                 }
-            }
-        }
 
-        function fetchRelatedMovies(movieId) {
-            // Show the loader
-            const loader = document.getElementById('loader');
-            if (loader) {
-                loader.style.display = 'block'; // Show loader
-            }
-
-            // Make an AJAX request to get related movies from the backend
-            fetch(`/movie/simillar/${movieId}`)
-                .then(response => response.json())
-                .then(data => {
-                    let relatedMoviesContainer = document.getElementById('related-movies');
-                    relatedMoviesContainer.innerHTML = '';  // Clear previous related movies
-
-                    // Hide the loader after the data is fetched
-                    if (loader) {
-                        loader.style.display = 'none';
-                    }
-
-                    // Display related movies
-                    data.related_movies.forEach(movie => {
-                        let movieBox = document.createElement('div');
-                        movieBox.className = 'related-movie-box';
-                        movieBox.innerHTML = ` 
-                            <div class="movie-info">
-                                <h3>${movie.Name}</h3>
-                                <p>${movie.Year}</p>
-                            </div>
-                        `;
-                        relatedMoviesContainer.appendChild(movieBox);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching related movies:', error);
-                    // Hide loader in case of error
-                    if (loader) {
-                        loader.style.display = 'none';
-                    }
+                // Display related movies
+                data.related_movies.forEach(movie => {
+                    let movieBox = document.createElement('div');
+                    movieBox.className = 'related-movie-box';
+                    movieBox.innerHTML = ` 
+                        <div class="movie-info">
+                            <h3>${movie.Name}</h3>
+                            <p>${movie.Year}</p>
+                        </div>
+                    `;
+                    relatedMoviesContainer.appendChild(movieBox);
                 });
-        }
-    </script>
+            })
+            .catch(error => {
+                console.error('Error fetching related movies:', error);
+                // Hide loader in case of error
+                if (loader) {
+                    loader.style.display = 'none';
+                }
+            });
+    }
+</script>
 {% endblock %}
