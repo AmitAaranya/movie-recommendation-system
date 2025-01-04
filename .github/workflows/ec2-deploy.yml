@@ -51,7 +51,7 @@ jobs:
     # Step 7: Connect to EC2 and Deploy
     - name: SSH into EC2 and Deploy the App
       run: |
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_PUBLIC_IP }} "GITHUB_SHA=$GITHUB_SHA bash -s" << 'EOF'
           # Debug the environment variables
           echo "Docker Username: ${{ secrets.DOCKER_USERNAME }}"
           echo "GITHUB_SHA: $GITHUB_SHA"
@@ -68,6 +68,4 @@ jobs:
           # Run the Flask app in Docker
           docker run -d -p 8000:8000 --restart always --name movie-recommendation-system ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA
         EOF
-    env:
-      GITHUB_SHA: ${{ github.sha }} 
 
