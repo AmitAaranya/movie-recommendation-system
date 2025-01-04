@@ -57,8 +57,8 @@ jobs:
           docker ps -q -f "name=movie-recommendation-system" | xargs -r docker stop | xargs -r docker rm
           
           # Clearing Old image
-          docker rmi -f $(docker images -q)
-          
+          docker images -q | xargs -r docker rmi -f > /dev/null 2>&1
+
           # Pull the Docker image from Docker Hub
           docker pull ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA
           
