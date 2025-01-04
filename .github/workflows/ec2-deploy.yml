@@ -40,13 +40,16 @@ jobs:
 
     # Step 6: Copy the EC2 SSH private key to the runner
     - name: Set up SSH Key
-      run: echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+      run: |
+        mkdir -p ~/.ssh      # Ensure the .ssh directory exists
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa  # Set proper permissions for the SSH key
       continue-on-error: true
+
 
     # Step 7: Connect to EC2 and Deploy
     - name: SSH into EC2 and Deploy the App
       run: |
-        chmod 600 ~/.ssh/id_rsa
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
           # Pull the Docker image from Docker Hub
           docker pull ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA
