@@ -12,4 +12,4 @@ RUN pip install --no-cache-dir gunicorn
 
 EXPOSE 8000
 
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "app:app", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-"]
