@@ -25,7 +25,7 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
-    Step 4: Build and Push Docker image to Docker Hub
+    # Step 4: Build and Push Docker image to Docker Hub
     - name: Build and Push Docker Image
       run: |
         docker build -t ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA .
