@@ -59,6 +59,6 @@ jobs:
           docker ps -q -f "name=movie-recommendation-system" | xargs -r docker stop | xargs -r docker rm
           
           # Run the Flask app in Docker
-          docker run -d -p 8000:8000 --restart always --name movie-recommendation-system ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA
+          docker run -d -p 8000:8000 -v /home/ec2-user/moviedb:/app/instance --restart always --name movie-recommendation-system ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA
         EOF
 
