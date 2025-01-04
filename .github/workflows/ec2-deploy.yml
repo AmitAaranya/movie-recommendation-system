@@ -27,8 +27,9 @@ jobs:
     # Step 4: Build and Push Docker image to Docker Hub
     - name: Build and Push Docker Image
       run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA .
-        docker push ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA
+        SHORT_SHA=${{ github.sha:0:4 }}
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$SHORT_SHA .
+        docker push ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$SHORT_SHA
 
     # Step 5: Set up AWS CLI to interact with EC2
     - name: Set up AWS CLI
@@ -50,13 +51,14 @@ jobs:
     # Step 7: Connect to EC2 and Deploy
     - name: SSH into EC2 and Deploy the App
       run: |
+        SHORT_SHA=${{ github.sha:0:4 }}
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
           # Pull the Docker image from Docker Hub
-          docker pull ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA
+          docker pull ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$SHORT_SHA
           
           # Stop and remove any existing containers
           docker ps -q -f "name=movie-recommendation-system" | xargs -r docker stop | xargs -r docker rm
           
           # Run the Flask app in Docker
-          docker run -d -p 8000:8000 --restart always --name movie-recommendation-system ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA
+          docker run -d -p 8000:8000 --restart always --name movie-recommendation-system ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$SHORT_SHA
         EOF
