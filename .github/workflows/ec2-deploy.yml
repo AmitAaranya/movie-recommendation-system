@@ -1,0 +1,70 @@
+name: Deploy movie-recommendation-system app to EC2
+
+on:
+  push:
+    branches:
+      - main
+      - deploy-test
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+    # Step 1: Check out the code
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    # Step 2: Set up Docker Buildx (for building multi-platform images)
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    # Step 3: Log in to Docker Hub
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+    # Step 4: Build and Push Docker image to Docker Hub
+    - name: Build and Push Docker Image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA .
+        docker push ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA
+
+    # Step 5: Set up AWS CLI to interact with EC2
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    # Step 6: Copy the EC2 SSH private key to the runner
+    - name: Set up SSH Key
+      run: |
+        mkdir -p ~/.ssh      # Ensure the .ssh directory exists
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa  # Set proper permissions for the SSH key
+      continue-on-error: true
+
+
+    # Step 7: Connect to EC2 and Deploy
+    - name: SSH into EC2 and Deploy the App
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+          # Debug the environment variables
+          echo "Docker Username: ${{ secrets.DOCKER_USERNAME }}"
+          echo "GITHUB_SHA: $GITHUB_SHA"
+          
+          # Explicitly export GITHUB_SHA for the SSH session if needed
+          export GITHUB_SHA=$GITHUB_SHA
+
+          # Pull the Docker image from Docker Hub
+          docker pull ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA
+          
+          # Stop and remove any existing containers
+          docker ps -q -f "name=movie-recommendation-system" | xargs -r docker stop | xargs -r docker rm
+          
+          # Run the Flask app in Docker
+          docker run -d -p 8000:8000 --restart always --name movie-recommendation-system ${{ secrets.DOCKER_USERNAME }}/movie-recommendation-system:$GITHUB_SHA
+        EOF
