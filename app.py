@@ -32,9 +32,35 @@ def load_user(user_id):
 
 # AI
 AI = Ai(model_data_dir=os.path.join("data","model"),user_feature=14,movie_feature=15)
-@app.route("/")
+# AI.get_all_movie_vector(MovieOps(db.session).get_all())
+
+@app.route('/')
 def home():
-    return "Hello World"
+    try:
+        movies = MovieOps(db.session).get_all()
+        db.session.commit()
+        if not movies:
+            return jsonify({"message": "No movies found"}), 404
+        movie_list = [{'Id': movie.Id, "Name": movie.Name,"Year": movie.Year} for movie in movies]
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({"message": "Error retrieving all movies", "error": str(e)}), 500
+    return render_template('movie_recommend.html', movies=movie_list)
+
+
+@app.route('/movie_recommend')
+@login_required
+def movie_recommend():
+    # Example list of recommended movies, this can be dynamic based on user preferences or ratings
+    recommended_movies = [
+        {'id': 1, 'title': 'Movie 1', 'year': 2020},
+        {'id': 2, 'title': 'Movie 2', 'year': 2021},
+        {'id': 3, 'title': 'Movie 3', 'year': 2019},
+        # Add more movies as needed
+    ]
+
+    return render_template('movie_recommend.html', movies=recommended_movies)
+
 
 @app.route("/ai/rate",methods=['POST'])
 def movie_embed():
@@ -44,13 +70,18 @@ def movie_embed():
 
     return jsonify(AI.predict_rating(user.to_array(),movie.to_array()))
 
-@app.route('/movies', methods=['POST'])
+@app.route('/movie/add', methods=['GET','POST'])
 def add_movie():
+    if request.method == 'GET':
+        return render_template('movie_add.html')
     data = request.get_json()
-    movie = MovieOps(db.session).add(**data)
+    movie_ops = MovieOps(db.session)
+    for movie in data:
+        genres = {genre: 1 for genre in movie['genres']}
+        movie_ops.add(Name=movie['name'],Year=int(movie['year']),**genres)
     try:
         db.session.commit()
-        return jsonify({"message": "Movie added successfully", "Id": movie.Id}), 201
+        return jsonify({"message": "Movie added successfully"}), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": "Error adding movie", "error": str(e)}), 500
@@ -182,5 +213,5 @@ def handle_not_found_error(error):
         return jsonify({"error": f"{error}"}), 500
     
 if __name__ == "__main__":
-    # app.run(debug=True)
-    app.run()
+    app.run(debug=True)
+    # app.run()

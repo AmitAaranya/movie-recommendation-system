@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    /* General page styling */
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f7fc;
+        color: #333;
+        margin: 0;
+        padding: 20px;
+    }
+
+    h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 30px;
+    }
+
+    /* Container for the form */
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin: 0 auto;
+    }
+
+    /* Styling for movie tiles */
+    .movie-block {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        border: 2px solid #ddd;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        background-color: #f9f9f9;
+        transition: all 0.3s ease;
+    }
+
+    .movie-block:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        background-color: #f0f0f0;
+    }
+
+    .movie-block label {
+        font-weight: bold;
+    }
+
+    /* Styling for the name and year row */
+    .name-year-row {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
+    /* Styling for name and year inputs */
+    .movie-block input[type="text"],
+    .movie-block input[type="number"] {
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Highlight the name and year fields */
+    .highlighted {
+        background-color: #f0f8ff;
+        /* Light blue background for highlighting */
+        border-color: #007BFF;
+        /* Blue border color for focus */
+    }
+
+    .checkbox-row {
+        grid-column: span 2;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .checkbox-row label {
+        margin-bottom: 10px;
+    }
+
+    /* Buttons */
+    button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-top: 20px;
+    }
+
+    button:hover {
+        background-color: #45a049;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .movie-block {
+            grid-template-columns: 1fr;
+        }
+
+        .name-year-row {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    // Function to add a new movie input field dynamically
+    function addMovie() {
+        const movieContainer = document.getElementById('movies-container');
+        const movieCount = movieContainer.children.length + 1;
+
+        const movieDiv = document.createElement('div');
+        movieDiv.classList.add('movie-block');
+
+        // Movie Name input
+        const nameLabel = document.createElement('label');
+        nameLabel.innerText = 'Name: ';
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.name = `movie_name_${movieCount}`;
+        nameInput.required = true;
+        nameInput.classList.add('highlighted');
+
+        // Movie Year input
+        const yearLabel = document.createElement('label');
+        yearLabel.innerText = 'Year: ';
+        const yearInput = document.createElement('input');
+        yearInput.type = 'number';
+        yearInput.name = `movie_year_${movieCount}`;
+        yearInput.required = true;
+        yearInput.classList.add('highlighted');
+
+        // Append the name and year inputs to the same row
+        const nameYearRow = document.createElement('div');
+        nameYearRow.classList.add('name-year-row');
+        nameYearRow.appendChild(nameLabel);
+        nameYearRow.appendChild(nameInput);
+        nameYearRow.appendChild(yearLabel);
+        nameYearRow.appendChild(yearInput);
+
+        movieDiv.appendChild(nameYearRow);
+
+        // Genre checkboxes (Second row)
+        const genres = [
+            'Adventure', 'Animation', 'Children', 'Comedy', 'Fantasy', 'Romance',
+            'Drama', 'Action', 'Crime', 'Thriller', 'Horror', 'Mystery', 'SciFi', 'Documentary'
+        ];
+        const checkboxRow = document.createElement('div');
+        checkboxRow.classList.add('checkbox-row');
+        genres.forEach(genre => {
+            const genreCheckbox = document.createElement('label');
+            genreCheckbox.innerHTML = `<input type="checkbox" name="movie_genres_${movieCount}[]" value="${genre}"> ${genre}`;
+            checkboxRow.appendChild(genreCheckbox);
+        });
+
+        // Append the genre checkboxes row to the movie block
+        movieDiv.appendChild(checkboxRow);
+
+        // Append the new movie div to the container
+        movieContainer.appendChild(movieDiv);
+    }
+
+    // Function to handle form submission and convert data to JSON
+    function submitForm(event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        const form = event.target;
+        const formData = new FormData(form);
+        const moviesData = [];
+
+        // Query all movie name inputs dynamically
+        const movieNames = form.querySelectorAll('input[name^="movie_name_"]');
+        const movieCount = movieNames.length; // Dynamically calculate the number of movies
+
+        // Process each movie's data
+        for (let i = 1; i <= movieCount; i++) {
+            const movieName = formData.get(`movie_name_${i}`);
+            const movieYear = formData.get(`movie_year_${i}`);
+            const movieGenres = formData.getAll(`movie_genres_${i}[]`);
+
+            if (movieName && movieYear) {
+                moviesData.push({
+                    name: movieName,
+                    year: movieYear,
+                    genres: movieGenres
+                });
+            }
+        }
+
+        console.log('Movies Data:', moviesData); // Debugging line
+
+        // If no movie data is present, alert the user
+        if (moviesData.length === 0) {
+            console.error("No movie data to send.");
+            alert('No movie data to submit!');
+            return;
+        }
+
+        // Convert to JSON format
+        const jsonData = JSON.stringify(moviesData);
+
+        // Send the JSON data to Flask server
+        fetch('/movie/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: jsonData
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || 'Server Error') });
+                }
+                return response.json();  // This returns the parsed JSON data.
+            })
+            .then(data => {
+                alert('Movies added successfully!');
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('There was an error adding the movies.');
+            });
+    }
+
+</script>
+
+
+<div class="form-container">
+    <h1>Add Movies to Database</h1>
+    <form id="movie-form" onsubmit="submitForm(event)">
+        <div id="movies-container">
+            <!-- Dynamic movie input fields will appear here -->
+        </div>
+
+        <button type="button" onclick="addMovie()">Add Movie</button><br><br>
+
+        <button type="submit">Submit Movies</button>
+    </form>
+</div>
+
+{% endblock %}
