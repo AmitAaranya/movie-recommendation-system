@@ -1,4 +1,4 @@
-name: Deploy movie-recommendation-system app to EC2
+name: EC2 Deployment
 
 on:
   push:
