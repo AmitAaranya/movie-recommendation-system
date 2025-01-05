@@ -42,11 +42,19 @@ def home():
         user_ops = UserOps(db.session)
         rated_movie = user_ops.get_rated_movies(user_id)
         non_rated_movie = user_ops.get_non_rated_movies(user_id)
+        user = user_ops.get_by_id(user_id)
+        predicted_rating_movie = []
+        for movie in non_rated_movie:
+            predicted_rating_movie.append({"Id": movie.Id,
+                                "Name": movie.Name,
+                                "Year": movie.Year,
+                                "Rating":round(AI.predict_rating(user.to_array(),movie.to_array())*2)/2})
+        predicted_rating_movie.sort(key= lambda x: x['Rating'],reverse=True)
         db.session.commit()
     except SQLAlchemyError as e:
         db.session.rollback()
         return jsonify({"error": "Error retrieving all movies", "error": str(e)}), 500
-    return render_template('home.html', rated_movies=rated_movie,recommended_movies=non_rated_movie)
+    return render_template('home.html', rated_movies=rated_movie,recommended_movies=predicted_rating_movie)
 
 @app.route("/ai/rate",methods=['POST'])
 def movie_embed():

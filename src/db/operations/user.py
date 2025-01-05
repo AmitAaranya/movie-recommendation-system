@@ -60,11 +60,11 @@ class UserOps():
         rating_alias = aliased(RatingDb)
 
         # Query for movies that are not rated by the specific user
-        non_rated_movies = self.session.query(MovieDb.Id,MovieDb.Name,MovieDb.Year) \
+        non_rated_movies = self.session.query(MovieDb) \
             .filter(~exists().where(rating_alias.MovieId == MovieDb.Id).where(rating_alias.UserId == user_id)) \
             .all()
         
-        return [{"Id": movie[0],"Name": movie[1],"Year": movie[2]} for movie in non_rated_movies]
+        return non_rated_movies
 
     def rate_movie(self,email,movie_id,rating):
         user = self.get(email)
