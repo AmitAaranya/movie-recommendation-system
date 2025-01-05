@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movie Recommender</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
+
 <body>
     <header>
         <div class="logo">
             <a href="/" style="text-decoration: none; color: inherit;">
                 <h2>Movie Recommender</h2>
-              </a>
-            
+            </a>
+
         </div>
         <nav>
             <ul>
@@ -20,22 +22,22 @@
                 <li><a href="/movie/simillar">MovieMatch</a></li>
                 <li><a href="/movie/add">Movie+</a></li>
                 {% if current_user.is_authenticated %}
-                    <!-- Show User button if logged in -->
-                    <li id="user-btn">
-                        <a href="#">User</a>
-                        <ul id="user-dropdown" style="display:none;">
-                            <li><a href="/about">About</a></li>
-                            <li><a href="{{ url_for('logout') }}">Logout</a></li>
-                        </ul>
-                    </li>
+                <!-- Show User button if logged in -->
+                <li id="user-btn">
+                    <a href="#">User</a>
+                    <ul id="user-dropdown" style="display:none;">
+                        <li><a href="/about">About</a></li>
+                        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    </ul>
+                </li>
                 {% else %}
-                    <!-- Show Login button if not logged in -->
-                    <li><a href="{{ url_for('login') }}" id="login-btn">Log in</a></li>
+                <!-- Show Login button if not logged in -->
+                <li><a href="{{ url_for('login') }}" id="login-btn">Log in</a></li>
                 {% endif %}
             </ul>
         </nav>
-    </header>  
-    
+    </header>
+
 
     <!-- Main content block that other templates can override -->
     <div class="content">
@@ -45,8 +47,8 @@
     <!-- Footer Section -->
     <footer>
         <p>
-            <a href="mailto:amitaaranya@gmail.com" target="_blank">amitaaranya@gmail.com</a> | 
-            <a href="https://www.linkedin.com/in/amitaaranya" target="_blank">linkedin.com/amitaaranya</a> | 
+            <a href="mailto:amitaaranya@gmail.com" target="_blank">amitaaranya@gmail.com</a> |
+            <a href="https://www.linkedin.com/in/amitaaranya" target="_blank">linkedin.com/amitaaranya</a> |
             <a href="https://github.com/AmitAaranya" target="_blank">github.com/AmitAaranya</a>
         </p>
     </footer>
@@ -58,7 +60,7 @@
             dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
             event.stopPropagation(); // Prevent event propagation to close dropdown
         });
-    
+
         // Close dropdown if clicked outside of the user button
         document.addEventListener("click", function (event) {
             const dropdown = document.getElementById("user-dropdown");
@@ -66,6 +68,11 @@
                 dropdown.style.display = "none";
             }
         });
+
+        function updateRating(movieId, rating) {
+            // Update the displayed rating value (text) when the slider value changes
+            document.getElementById('rating-value-' + movieId).innerText = rating;
+        }
     </script>
 </body>
 </html>

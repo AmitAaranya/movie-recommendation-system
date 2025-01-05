@@ -4,7 +4,7 @@
         <p>{{ movie['Year'] }}</p>
     </div>
     <!-- Slider initialized with the movie's rating or default to 0 -->
-    <input type="range" min="0" max="5" value="{{ movie['rating'] | default(0) }}" step="0.5" class="rating-slider" id="rating-{{ movie['Id'] }}" oninput="updateRating({{ movie['Id'] }}, this.value)">
-    <p>Rating: <span id="rating-value-{{ movie['Id'] }}">{{ movie['rating'] | default(0) }}</span></p>
+    <input type="range" min="0" max="5" value="{{ movie['Rating'] | default(0) }}" step="0.5" class="rating-slider"
+        id="rating-{{ movie['Id'] }}" oninput="updateRating({{ movie['Id'] }}, this.value)">
+    <p>Rating: <span id="rating-value-{{ movie['Id'] }}">{{ movie['Rating'] | default(0) }}</span></p>
 </div>
-

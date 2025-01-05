@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Movies Rated by You</h2>
+<div class="movie-grid-rated">
+    {% for movie in rated_movies %}
+    {% include 'movies.html' %}
+    {% endfor %}
+</div>
+
+<h2>Recommended Movies
+    <button id="update-ratings-button" onclick="updateAllRatings()">Update Ratings</button>
+</h2>
+<div class="movie-grid">
+    {% for movie in recommended_movies %}
+    {% include 'movies.html' %}
+    {% endfor %}
+</div>
+
+<script>
+    function updateAllRatings() {
+        // Get all movie blocks within the recommended movies grid
+        const moviesInGrid = document.querySelectorAll('.movie-grid .movie-block');
+
+        // Prepare an array to hold the movies with ratings > 0
+        const moviesToUpdate = [];
+
+        // Iterate over each movie in the grid
+        moviesInGrid.forEach(movieElement => {
+            // Get the movie ID from the data-movie-id attribute
+            const movieId = movieElement.getAttribute('data-movie-id');
+
+            // Get the rating value from the corresponding rating slider element
+            const ratingElement = document.getElementById('rating-' + movieId);
+            const rating = parseFloat(ratingElement.value);  // Use the slider value as rating
+
+            // If rating is greater than 0, include the movie in the update list
+            if (rating > 0) {
+                moviesToUpdate.push({
+                    MovieId: movieId,
+                    Rating: rating
+                });
+            }
+        });
+
+        // If there are movies to update, send the data to the server
+        if (moviesToUpdate.length > 0) {
+            fetch('/movie/rate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ movies: moviesToUpdate })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data.success);
+                    alert('Added movie Successfully')
+                    window.location.href = '/'; 
+                })
+                .catch(error => {
+                    console.error('Error updating ratings:', error);
+                });
+        } else {
+            alert('No movies with ratings greater than 0.');
+        }
+    }
+</script>
+
+<style>
+    .movie-grid-rated {
+        display: flex;
+        overflow-x: auto;
+        /* Makes the grid scrollable if it overflows */
+        gap: 20px;
+        /* Adds space between movies */
+        padding: 10px 0;
+        /* Optional padding for aesthetics */
+    }
+
+    .movie-block {
+        flex-shrink: 0;
+        /* Prevents movie blocks from shrinking */
+        width: auto;
+        /* Set the width of each movie block */
+    }
+
+    .movie-info h3,
+    .movie-info p {
+        text-align: center;
+        margin: 0;
+    }
+
+    #update-ratings-button {
+        margin-left: 15px;
+        padding: 5px 10px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    #update-ratings-button:hover {
+        background-color: #45a049;
+    }
+</style>
+
+
+{% endblock %}

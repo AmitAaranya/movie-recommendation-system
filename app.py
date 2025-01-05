@@ -20,7 +20,7 @@ with app.app_context():
     db.create_all()
 
 # Flask-login
-from flask_login import LoginManager, login_required, login_user, logout_user
+from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -35,39 +35,24 @@ AI = Ai(model_data_dir=os.path.join("data","model"),user_feature=14,movie_featur
 # AI.get_all_movie_vector(MovieOps(db.session).get_all())
 
 @app.route('/')
+@login_required
 def home():
+    user_id = current_user.Id
     try:
-        movies = MovieOps(db.session).get_all()
+        user_ops = UserOps(db.session)
+        rated_movie = user_ops.get_rated_movies(user_id)
+        non_rated_movie = user_ops.get_non_rated_movies(user_id)
         db.session.commit()
-        if not movies:
-            return jsonify({"message": "No movies found"}), 404
-        movie_list = [{'Id': movie.Id, "Name": movie.Name,"Year": movie.Year} for movie in movies]
     except SQLAlchemyError as e:
         db.session.rollback()
-        return jsonify({"message": "Error retrieving all movies", "error": str(e)}), 500
-    return render_template('movie_recommend.html', movies=movie_list)
-
-
-@app.route('/movie_recommend')
-@login_required
-def movie_recommend():
-    # Example list of recommended movies, this can be dynamic based on user preferences or ratings
-    recommended_movies = [
-        {'id': 1, 'title': 'Movie 1', 'year': 2020},
-        {'id': 2, 'title': 'Movie 2', 'year': 2021},
-        {'id': 3, 'title': 'Movie 3', 'year': 2019},
-        # Add more movies as needed
-    ]
-
-    return render_template('movie_recommend.html', movies=recommended_movies)
-
+        return jsonify({"error": "Error retrieving all movies", "error": str(e)}), 500
+    return render_template('home.html', rated_movies=rated_movie,recommended_movies=non_rated_movie)
 
 @app.route("/ai/rate",methods=['POST'])
 def movie_embed():
     data = request.get_json()
     movie = MovieOps(db.session).get(data['movieId'])
     user = UserOps(db.session).get(data['Email'])
-
     return jsonify(AI.predict_rating(user.to_array(),movie.to_array()))
 
 @app.route('/movie/add', methods=['GET','POST'])
@@ -81,10 +66,10 @@ def add_movie():
         movie_ops.add(Name=movie['name'],Year=int(movie['year']),**genres)
     try:
         db.session.commit()
-        return jsonify({"message": "Movie added successfully"}), 201
+        return redirect(url_for('home'))
     except Exception as e:
         db.session.rollback()
-        return jsonify({"message": "Error adding movie", "error": str(e)}), 500
+        return jsonify({"error": "Error adding movie", "error": str(e)}), 500
     
 
 @app.route('/movies', methods=['GET'])
@@ -93,12 +78,12 @@ def get_all_movies():
         movies = MovieOps(db.session).get_all()
         db.session.commit()
         if not movies:
-            return jsonify({"message": "No movies found"}), 404
+            return jsonify({"error": "No movies found"}), 404
         movie_list = [movie.to_dict() for movie in movies]
         return jsonify(movie_list)
     except SQLAlchemyError as e:
         db.session.rollback()
-        return jsonify({"message": "Error retrieving all movies", "error": str(e)}), 500
+        return jsonify({"error": "Error retrieving all movies", "error": str(e)}), 500
 
 @app.route('/movies/<int:id>', methods=['GET'])
 def get_movie_by_id(id):
@@ -108,14 +93,14 @@ def get_movie_by_id(id):
         return jsonify(movie.to_dict())
     except SQLAlchemyError as e:
         db.session.rollback()
-        return jsonify({"message": "Error retrieving movie", "error": str(e)}), 500
+        return jsonify({"error": "Error retrieving movie", "error": str(e)}), 500
     
 @app.route('/movie/simillar', methods=['GET'])
 def get_movies():
     movies = MovieOps(db.session).get_all()
     db.session.commit()
     if not movies:
-        return jsonify({"message": "No movies found"}), 404
+        return jsonify({"error": "No movies found"}), 404
     movie_list = [{'Id': movie.Id, "Name": movie.Name,"Year": movie.Year} for movie in movies]
     return render_template('simillar_movie.html', movies=movie_list)
 
@@ -136,11 +121,11 @@ def add_user():
         movies = MovieOps(db.session).get_all()
         db.session.commit()
         if not movies:
-            return jsonify({"message": "No movies found"}), 404
+            return jsonify({"error": "No movies found"}), 404
         movie_list = [{'Id': movie.Id, "Name": movie.Name,"Year": movie.Year} for movie in movies]
     except SQLAlchemyError as e:
         db.session.rollback()
-        return jsonify({"message": "Error retrieving all movies", "error": str(e)}), 500
+        return jsonify({"error": "Error retrieving all movies", "error": str(e)}), 500
     return render_template('register.html', movies=movie_list)
 
 @app.route('/register', methods=['POST'])
@@ -152,10 +137,10 @@ def register_user():
         user_ops.rate_movie(data.get('Email'),movie_id,float(rating))
     try:
         db.session.commit()
-        return jsonify({"message": "User Created successfully", "Id": new_user.Email}), 201
+        return jsonify({"success": "User Created successfully", "Id": new_user.Email}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"message": "Error While Creating User", "error": str(e)}), 500
+        return jsonify({"error": "Error While Creating User", "error": str(e)}), 500
     
 @app.route('/login', methods=['GET'])
 def login():
@@ -190,17 +175,19 @@ def get_user():
     user_data = user.to_dict()
     return jsonify(user_data)
 
-@app.route("/rate",methods = ['POST'])
+@app.route("/movie/rate",methods = ['POST'])
+@login_required
 def rate_movies():
     data = request.get_json()
-    user = UserOps(db.session).rate_movie(data['Email'],data['MovieId'],data["Rating"])
+    user_ops = UserOps(db.session)
+    for movie in data['movies']:
+        user_ops.rate_movie(current_user.Email,movie['MovieId'],movie["Rating"])
     try:
         db.session.commit()
-        return jsonify(user.to_dict()), 201
+        return jsonify({'success': "Movie Ratings Saved"}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"message": "Rate a movie", "error": str(e)}), 500
-
+        return jsonify({"error": str(e)}), 500
 
 @app.errorhandler(Exception)
 def handle_not_found_error(error):
