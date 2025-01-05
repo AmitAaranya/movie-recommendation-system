@@ -1,8 +1,12 @@
 import bcrypt
+from sqlalchemy.orm import aliased
+from sqlalchemy import exists
+from src.db.model import MovieDb
+from src.db.model import RatingDb
 from src.db.model import UserDb
-from src.error import UserNotFoundError
 from .rating import RatingOps
 from .movie import MovieOps
+from src.error import UserNotFoundError
 
 class UserOps():
 
@@ -48,6 +52,19 @@ class UserOps():
             setattr(user, field, kwrgs.get(field, getattr(user, field)))
         return user
     
+    def get_rated_movies(self,user_id):
+        rated_movie = self.session.query(MovieDb.Id,MovieDb.Name,MovieDb.Year,RatingDb.Rating).join(RatingDb).filter(RatingDb.UserId == user_id).all()
+        return [{"Id": movie[0],"Name": movie[1],"Year": movie[2],"Rating":movie[3]} for movie in rated_movie]
+    
+    def get_non_rated_movies(self,user_id):
+        rating_alias = aliased(RatingDb)
+
+        # Query for movies that are not rated by the specific user
+        non_rated_movies = self.session.query(MovieDb) \
+            .filter(~exists().where(rating_alias.MovieId == MovieDb.Id).where(rating_alias.UserId == user_id)) \
+            .all()
+        
+        return non_rated_movies
 
     def rate_movie(self,email,movie_id,rating):
         user = self.get(email)
