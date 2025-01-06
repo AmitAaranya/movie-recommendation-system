@@ -18,7 +18,7 @@ class Ai():
         assert movie_.shape[1] == self.movie_array_len
         
         with torch.no_grad():
-            return self.__model.rating_model(user_,movie_).item()
+            return self.__model.rating_model(user_,movie_).item()*5
 
     def get_user_vector(self,user_array):
         user_ = torch.tensor(self.__scalar.user_transform(user_array),dtype=torch.float32)
