@@ -23,7 +23,8 @@ class RecommenderNN(nn.Module):
         self.MovieNN = CommonNN(movie_feature_no)
         
     def forward(self,user_train,movie_train):
-        return torch.sum(self.UserNN(user_train) * self.MovieNN(movie_train),dim=1).reshape(-1,1)
+        out =  torch.sum(self.UserNN(user_train) * self.MovieNN(movie_train),dim=1).reshape(-1,1)
+        return torch.sigmoid(out)
     
 
 
