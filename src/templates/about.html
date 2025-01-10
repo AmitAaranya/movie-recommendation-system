@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block page_name %}User{% endblock %}
+{% block content %}
+<style>
+    .input-box {
+        border: 1px solid #ccc;
+        padding: 8px;
+        width: 100%;
+        display: inline-block;
+    }
+
+    .input-box p {
+        margin: 0;
+        padding: 0;
+        font-size: 14px;
+    }
+</style>
+<div class="registration-container">
+    <div class="registration-form">
+        <h2 style="margin-bottom: 10px;">User Details</h2>
+        <div class="form-row">
+            <div class="form-field">
+                <label for="name">Name</label>
+                <div class="input-box">
+                    <p>{{user['Name']}}</p>
+                </div>
+            </div>
+            <div class="form-field">
+                <label for="email">Email</label>
+                <div class="input-box">
+                    <p>{{user['Email']}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Movie Block Section (separate div) -->
+        <div class="movie-grid">
+            {% for Genre, Avg_Rating in user['Ratings'].items() %}
+            <div class="movie-block">
+                <div class="movie-info">
+                    <h3>{{Genre}}</h3>
+                </div>
+                <!-- Slider initialized with the movie's rating or default to 0 -->
+                <input type="range" min="0" max="5" value="{{ Avg_Rating | default(0) }}" step="0.5" class="rating-slider"
+                    id="{{Genre}}" disabled>
+                <p>Avg Rating: <span id="{{Genre}}">{{ Avg_Rating | default(0) | round(1)}}</span></p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

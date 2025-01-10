@@ -19,15 +19,14 @@
         </div>
         <nav>
             <ul>
-                <!-- <li><a href="/">Home</a></li> -->
                 <li><a href="/movie/simillar">MovieMatch</a></li>
                 <li><a href="/movie/add">Movie+</a></li>
                 {% if current_user.is_authenticated %}
                 <!-- Show User button if logged in -->
                 <li id="user-btn">
-                    <a href="#">User</a>
+                    <a href="javascript:void(0);" onclick="toggleDropdown()">User</a>
                     <ul id="user-dropdown" style="display:none;">
-                        <li><a href="/about">About</a></li>
+                        <li><a href="/user/about">About</a></li>
                         <li><a href="{{ url_for('logout') }}">Logout</a></li>
                     </ul>
                 </li>
@@ -37,6 +36,8 @@
                 {% endif %}
             </ul>
         </nav>
+        
+
     </header>
 
 
@@ -55,25 +56,34 @@
     </footer>
 
     <script>
-        // Toggle user dropdown when the user button is clicked
-        document.getElementById("user-btn").addEventListener("click", function (event) {
-            const dropdown = document.getElementById("user-dropdown");
-            dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-            event.stopPropagation(); // Prevent event propagation to close dropdown
-        });
+        // Toggle the visibility of the dropdown
+        function toggleDropdown(event) {
+            const dropdown = document.getElementById('user-dropdown');
+            const isVisible = dropdown.style.display === 'block';
 
-        // Close dropdown if clicked outside of the user button
-        document.addEventListener("click", function (event) {
-            const dropdown = document.getElementById("user-dropdown");
-            if (!event.target.closest("#user-btn")) {
-                dropdown.style.display = "none";
+            // Toggle the dropdown visibility
+            dropdown.style.display = isVisible ? 'none' : 'block';
+
+            // Prevent the event from propagating to the document
+            event.stopPropagation();
+        }
+
+        // Close dropdown if clicked outside of it
+        document.addEventListener('click', function (event) {
+            const dropdown = document.getElementById('user-dropdown');
+            const userButton = document.getElementById('user-btn');
+
+            // If the click was outside the user button and dropdown, hide the dropdown
+            if (!userButton.contains(event.target)) {
+                dropdown.style.display = 'none';
             }
         });
 
-        function updateRating(movieId,type, rating) {
+        function updateRating(movieId, type, rating) {
             // Update the displayed rating value (text) when the slider value changes
             document.getElementById(type + '-rating-value-' + movieId).innerText = rating;
         }
     </script>
 </body>
+
 </html>

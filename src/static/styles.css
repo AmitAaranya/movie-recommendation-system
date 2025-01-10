@@ -39,6 +39,7 @@ nav ul {
     display: flex;
     justify-content: center;
     gap: 20px;
+    margin-right: 10px;
 }
 
 nav ul li {
@@ -69,8 +70,7 @@ nav ul li a:hover {
     background-color: #fff;
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    width: 80%;
-    max-width: 800px;
+    width: 100%;
     padding: 20px;
     margin: 0 auto;
     /* Center the container */
@@ -317,23 +317,35 @@ footer a:hover {
     }
 }
 
+/* Key Changes */
+#user-btn {
+    position: relative; /* Added this to ensure dropdown is positioned correctly */
+}
+
 #user-dropdown {
     display: none;
+    position: absolute; /* Ensures the dropdown appears below the user button */
+    top: 100%; /* Makes it appear directly below the button */
+    left: -17px;
+    background-color: #333;
+    border-radius: 5px;
     list-style-type: none;
     padding: 0;
-    margin: 0;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    z-index: 1000; /* Ensures it overlays other elements */
 }
+
 
 #user-dropdown li {
-    background-color: #f1f1f1;
-    padding: 8px;
-    cursor: pointer;
+    padding: 10px;
 }
 
-#user-dropdown li:hover {
-    background-color: #ddd;
+#user-dropdown li a {
+    color: white;
+    text-decoration: none;
+    font-size: 1em;
 }
 
-#user-btn a {
-    cursor: pointer;
+#user-dropdown li a:hover {
+    color: #4CAF50;
 }

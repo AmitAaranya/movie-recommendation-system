@@ -183,6 +183,21 @@ def get_user():
     user_data = user.to_dict()
     return jsonify(user_data)
 
+@app.route('/user/about',methods=['GET'])
+@login_required
+def about():
+    user_details = UserOps(db.session).get_by_id(current_user.Id).to_dict()
+    del user_details['Id']
+    del user_details['Password']
+    Name = user_details.pop("Name")
+    Email = user_details.pop("Email")
+    user = {"Name": Name,
+            "Email": Email,
+            "Ratings":user_details
+            }
+    return render_template('about.html', user = user)
+    
+
 @app.route("/movie/rate",methods = ['POST'])
 @login_required
 def rate_movies():
