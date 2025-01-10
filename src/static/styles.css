@@ -60,7 +60,7 @@ nav ul li a:hover {
 .content {
     flex-grow: 1;
     /* Takes up the remaining space */
-    padding: 20px;
+    padding: 10px;
     background-color: #f4f4f4;
 }
 
@@ -118,7 +118,7 @@ input[type="password"] {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 20px;
-    margin-top: 20px;
+    margin-top: 10px;
 }
 
 .movie-block {

@@ -1,21 +1,37 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Movies Rated by You</h2>
+<h2>Rated:</h2>
 <div class="movie-grid-rated">
     {% for movie in rated_movies %}
-    {% include 'movies.html' %}
+        {% set Rating = movie['Rating'] %}
+        {% set Type = 'Rated' %}
+        {% set disable_slider = True %}
+        {% include 'movies.html' %}
     {% endfor %}
 </div>
 
-<h2>Recommended Movies
-    <button id="update-ratings-button" onclick="updateAllRatings()">Update Ratings</button>
+<h2>Recommended:</h2>
+<div class="movie-grid-rated">
+    {% for movie in recommended_movies %}
+        {% set Rating = movie['Rating'] %}
+        {% set Type = 'Recommended' %}
+        {% set disable_slider = True %}
+        {% include 'movies.html' %}
+    {% endfor %}
+</div>
+
+<h2>Rate:
+    <button id="update-ratings-button" onclick="updateAllRatings()">update</button>
 </h2>
 <div class="movie-grid">
     {% for movie in recommended_movies %}
-    {% include 'movies.html' %}
+        {% set Type = 'Rate' %}
+        {% set Rating = 0 %}
+        {% include 'movies.html' %}
     {% endfor %}
 </div>
+
 
 <script>
     function updateAllRatings() {
@@ -31,7 +47,7 @@
             const movieId = movieElement.getAttribute('data-movie-id');
 
             // Get the rating value from the corresponding rating slider element
-            const ratingElement = document.getElementById('rating-' + movieId);
+            const ratingElement = document.getElementById('Rate-rating-' + movieId);
             const rating = parseFloat(ratingElement.value);  // Use the slider value as rating
 
             // If rating is greater than 0, include the movie in the update list
@@ -75,7 +91,8 @@
         /* Makes the grid scrollable if it overflows */
         gap: 20px;
         /* Adds space between movies */
-        padding: 10px 0;
+        padding: 5px 0;
+        margin-bottom: 10px;
         /* Optional padding for aesthetics */
     }
 
@@ -95,7 +112,7 @@
     #update-ratings-button {
         margin-left: 15px;
         padding: 5px 10px;
-        background-color: #4CAF50;
+        background-color: #333;
         color: white;
         border: none;
         cursor: pointer;
